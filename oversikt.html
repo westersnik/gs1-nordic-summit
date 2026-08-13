@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digi-Coffee – oversikt</title>
+  <meta name="description" content="Passordbeskyttet oversikt over registrerte og resirkulerte RFID-kopper." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Gelasio:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    :root { --deep:#2E3F34; --sand:#F5F3F0; --sand-dark:#DAD5CD; --taupe:#5F5B53; --mint:#CEE3D2; --gold:#8A7F1E; --line:#D8D3CA; --white:#fff; --red:#B44A3D; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:var(--sand); color:var(--deep); font:15px/1.45 Figtree,system-ui,sans-serif; }
+    header { background:var(--deep); color:var(--white); padding:23px max(20px,calc((100vw - 1220px)/2)); }
+    .brand { display:flex; gap:20px; justify-content:space-between; align-items:center; }
+    h1,h2,h3 { font-family:Gelasio,Georgia,serif; font-weight:400; letter-spacing:-.02em; }
+    h1 { margin:0; font-size:31px; line-height:1.1; }
+    .brand p { margin:5px 0 0; color:var(--mint); font-size:13px; }
+    .access { display:inline-flex; align-items:center; gap:7px; color:var(--mint); border:1px solid rgba(206,227,210,.6); padding:6px 10px; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+    main { max-width:1220px; margin:0 auto; padding:27px 20px 56px; }
+    .intro { display:flex; justify-content:space-between; align-items:end; gap:22px; margin-bottom:20px; }
+    .intro h2 { margin:0 0 7px; font-size:28px; }
+    .intro p { margin:0; color:var(--taupe); max-width:660px; }
+    .link { color:var(--gold); font-weight:800; text-decoration:none; }
+    .controls { display:grid; grid-template-columns:minmax(220px,1fr) minmax(250px,1.6fr) auto; gap:12px; background:var(--white); border:1px solid var(--line); padding:16px; margin-bottom:20px; }
+    label { display:block; color:var(--taupe); font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px; }
+    select,input { width:100%; min-height:42px; padding:8px 10px; background:#fff; color:var(--deep); border:1px solid var(--sand-dark); border-radius:0; font:inherit; }
+    select:focus,input:focus { outline:2px solid var(--gold); outline-offset:1px; border-color:var(--gold); }
+    button { min-height:42px; padding:9px 14px; border:0; border-radius:0; background:var(--deep); color:#fff; font:800 13px Figtree,system-ui,sans-serif; cursor:pointer; }
+    button:hover { background:#3a5244; }
+    .refresh-wrap { align-self:end; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:21px; }
+    .stat { min-height:108px; background:var(--white); border:1px solid var(--line); padding:15px; }
+    .stat .num { display:block; font-size:32px; font-weight:800; letter-spacing:-.04em; line-height:1; }
+    .stat:nth-child(1) { border-top:4px solid var(--deep); }
+    .stat:nth-child(2) { border-top:4px solid var(--gold); }
+    .stat:nth-child(3) { border-top:4px solid #4F8360; }
+    .stat:nth-child(4) { border-top:4px solid var(--sand-dark); }
+    .stat small { display:block; margin-top:8px; color:var(--taupe); font-size:12px; }
+    .split { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+    .panel { background:var(--white); border:1px solid var(--line); overflow:hidden; }
+    .panel-head { padding:18px 18px 14px; border-bottom:1px solid var(--line); display:flex; gap:10px; justify-content:space-between; align-items:center; }
+    .panel h3 { margin:0; font-size:23px; }
+    .count { background:var(--mint); color:var(--deep); padding:3px 8px; font-weight:800; font-size:12px; }
+    .table-wrap { overflow:auto; max-height:530px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th { position:sticky; top:0; z-index:1; background:var(--sand); color:var(--taupe); text-align:left; font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:10px 12px; }
+    td { padding:11px 12px; border-top:1px solid #eeeae3; vertical-align:top; }
+    tr:hover td { background:#fbfaf8; }
+    .cup { color:var(--gold); font-weight:800; white-space:nowrap; }
+    .sub { display:block; color:var(--taupe); font-size:11px; margin-top:2px; }
+    .pill { display:inline-block; white-space:nowrap; padding:3px 6px; border:1px solid var(--sand-dark); color:var(--taupe); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .pill.recycled { color:var(--deep); border-color:#789883; background:var(--mint); }
+    .empty { padding:38px 18px; color:var(--taupe); text-align:center; }
+    .status { margin:14px 0 0; color:var(--taupe); font-size:12px; }
+    dialog { border:1px solid var(--deep); background:var(--white); color:var(--deep); padding:0; width:min(430px,calc(100% - 32px)); }
+    dialog::backdrop { background:rgba(46,63,52,.75); }
+    .login { padding:28px; }
+    .login h2 { margin:0 0 8px; font-size:29px; }
+    .login p { color:var(--taupe); margin:0 0 18px; }
+    .login .error { display:none; color:var(--red); font-size:13px; margin:9px 0 0; }
+    .login .error.show { display:block; }
+    .login button { width:100%; margin-top:12px; }
+    footer { text-align:center; color:var(--taupe); font-size:12px; padding:0 20px 28px; }
+    @media (max-width:850px) { .intro,.brand { align-items:flex-start; flex-direction:column; } .controls,.split { grid-template-columns:1fr; } .refresh-wrap { align-self:auto; } .stats { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:450px) { main { padding-inline:14px; } header { padding:20px 14px; } .stats { gap:8px; } .stat { padding:12px; min-height:94px; } .stat .num { font-size:27px; } h1 { font-size:27px; } }
+  </style>
+</head>
+<body>
+  <header><div class="brand"><div><h1>Digi-Coffee</h1><p>Oversikt over registrerte og resirkulerte kopper</p></div><span class="access">● Passordbeskyttet</span></div></header>
+  <main id="app" hidden>
+    <section class="intro"><div><h2>Arrangementoversikt</h2><p>Se hvem som har registrert en kopp og hvilke kopper som er lest av RFID-leseren. Velg et arrangement for å avgrense oversikten.</p></div><a class="link" href="konfigurasjon.html">Åpne arrangementskonfigurasjon →</a></section>
+    <section class="controls" aria-label="Filtrer oversikten">
+      <div><label for="event-filter">Arrangement</label><select id="event-filter"><option value="all">Alle arrangementer og historikk</option></select></div>
+      <div><label for="search">Søk</label><input id="search" type="search" placeholder="Søk på koppnummer, GIAI, navn eller selskap" /></div>
+      <div class="refresh-wrap"><button id="refresh" type="button">Oppdater data</button></div>
+    </section>
+    <section class="stats" aria-label="Nøkkeltall">
+      <article class="stat"><span class="num" id="total-allocated">0</span><small>Tildelte kopper</small></article>
+      <article class="stat"><span class="num" id="total-registered">0</span><small>Registrerte kopper</small></article>
+      <article class="stat"><span class="num" id="total-recycled">0</span><small>Resirkulerte kopper</small></article>
+      <article class="stat"><span class="num" id="recycle-rate">0%</span><small>Resirkulert av registrerte</small></article>
+    </section>
+    <section class="split">
+      <article class="panel"><div class="panel-head"><h3>Registrerte kopper</h3><span class="count" id="registered-count">0</span></div><div class="table-wrap"><table><thead><tr><th>Kopp</th><th>Navn</th><th>Selskap</th><th>Registrert</th></tr></thead><tbody id="registered-body"></tbody></table></div></article>
+      <article class="panel"><div class="panel-head"><h3>Resirkulerte kopper</h3><span class="count" id="recycled-count">0</span></div><div class="table-wrap"><table><thead><tr><th>Kopp</th><th>Registrert av</th><th>Resirkulert</th><th>Status</th></tr></thead><tbody id="recycled-body"></tbody></table></div></article>
+    </section>
+    <p class="status" id="status" role="status">Laster data …</p>
+  </main>
+  <dialog id="login-dialog"><form class="login" id="login-form"><h2>Åpne oversikt</h2><p>Skriv inn tilgangskoden for å se registrerings- og resirkuleringsdata.</p><label for="password">Tilgangskode</label><input id="password" type="password" inputmode="numeric" autocomplete="current-password" required autofocus /><p class="error" id="login-error">Feil tilgangskode. Prøv igjen.</p><button type="submit">Åpne oversikt</button></form></dialog>
+  <footer>Invig · GS1 Digital Link · RFID event management</footer>
+  <script>
+    const SUPABASE_URL = 'https://spbfuhajwfadzvdidalk.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_8FjsZ9PbOGVCMvzp0qxEyA_c2AJJpE3';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    const ACCESS_KEY = ['12345','67890'].join('');
+    const ACCESS_STORAGE_KEY = 'digicoffee-overview-access';
+    const $ = id => document.getElementById(id);
+    let events = [], cups = [], registrations = [], recycled = [], beerById = new Map();
+
+    function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char])); }
+    function formatDate(value) { if (!value) return '–'; return new Intl.DateTimeFormat('nb-NO',{dateStyle:'short',timeStyle:'short'}).format(new Date(value)); }
+    function cupForEventCup(id) { return cups.find(c => String(c.id) === String(id)); }
+    function cupLabel(item) { const eventCup = cupForEventCup(item.event_cup_id); if (eventCup?.display_number !== undefined && eventCup?.display_number !== null) return 'Kopp #'+eventCup.display_number; return item.giai ? 'GIAI '+item.giai : '–'; }
+    function eventName(id) { return events.find(event => event.id === id)?.name || (id ? 'Ukjent arrangement' : 'Historikk uten arrangement'); }
+    function selectedEvent() { return $('event-filter').value; }
+    function textMatches(item, extra='') { const query = $('search').value.trim().toLowerCase(); if (!query) return true; return (String(item.giai||'')+' '+String(item.name||'')+' '+String(item.company||'')+' '+String(item.epc||'')+' '+extra).toLowerCase().includes(query); }
+    function inSelectedEvent(item) { const selected = selectedEvent(); return selected === 'all' || item.event_id === selected; }
+    function emptyRow(message, columns) { return '<tr><td class="empty" colspan="'+columns+'">'+message+'</td></tr>'; }
+
+    function render() {
+      const selected = selectedEvent();
+      const matchingCups = selected === 'all' ? cups : cups.filter(c => c.event_id === selected);
+      const shownRegistrations = registrations.filter(item => inSelectedEvent(item) && textMatches(item, cupLabel(item))).sort((a,b) => new Date(b.registered_at||0)-new Date(a.registered_at||0));
+      const shownRecycled = recycled.filter(item => inSelectedEvent(item) && textMatches(item, cupLabel(item))).sort((a,b) => new Date(b.recycled_at||0)-new Date(a.recycled_at||0));
+      const ownerByEventCup = new Map(shownRegistrations.filter(row => row.event_cup_id).map(row => [String(row.event_cup_id), row]));
+      const registeredCupKeys = new Set(shownRegistrations.map(row => row.event_cup_id ? 'event:'+row.event_cup_id : 'giai:'+row.giai));
+      const recycledRegistered = shownRecycled.filter(row => registeredCupKeys.has(row.event_cup_id ? 'event:'+row.event_cup_id : 'giai:'+row.giai)).length;
+      const allocated = matchingCups.length;
+      $('total-allocated').textContent = allocated;
+      $('total-registered').textContent = shownRegistrations.length;
+      $('total-recycled').textContent = shownRecycled.length;
+      $('recycle-rate').textContent = shownRegistrations.length ? Math.round((recycledRegistered / shownRegistrations.length) * 100)+'%' : '0%';
+      $('registered-count').textContent = shownRegistrations.length;
+      $('recycled-count').textContent = shownRecycled.length;
+      $('registered-body').innerHTML = shownRegistrations.length ? shownRegistrations.map(row => '<tr><td class="cup">'+escapeHtml(cupLabel(row))+'<span class="sub">'+escapeHtml(row.giai||'')+'</span></td><td>'+escapeHtml(row.name||'–')+'</td><td>'+escapeHtml(row.company||'–')+'<span class="sub">'+escapeHtml(eventName(row.event_id))+'</span></td><td>'+formatDate(row.registered_at)+'</td></tr>').join('') : emptyRow('Ingen registrerte kopper i dette utvalget.',4);
+      $('recycled-body').innerHTML = shownRecycled.length ? shownRecycled.map(row => { const owner=ownerByEventCup.get(String(row.event_cup_id)) || registrations.find(reg => reg.giai === row.giai && (!selected || selected === 'all' || reg.event_id === row.event_id)); return '<tr><td class="cup">'+escapeHtml(cupLabel(row))+'<span class="sub">'+escapeHtml(row.giai||'')+'</span></td><td>'+(owner ? escapeHtml(owner.name||'–')+'<span class="sub">'+escapeHtml(owner.company||'')+'</span>' : '<span class="sub">Ikke registrert</span>')+'</td><td>'+formatDate(row.recycled_at)+'</td><td><span class="pill recycled">Resirkulert</span></td></tr>'; }).join('') : emptyRow('Ingen resirkulerte kopper i dette utvalget.',4);
+      $('status').textContent = 'Viser '+shownRegistrations.length+' registrerte og '+shownRecycled.length+' resirkulerte kopper · '+(selected === 'all' ? 'alle arrangementer' : eventName(selected))+'.';
+    }
+
+    async function loadData() {
+      $('status').textContent = 'Oppdaterer data …';
+      const [eventResult,cupResult,registrationResult,recycleResult,beerResult] = await Promise.all([
+        sb.from('event_sessions').select('id,name,status,target_cups,started_at').order('started_at',{ascending:false}),
+        sb.from('event_cups').select('id,event_id,cup_id,display_number,status'),
+        sb.from('registrations').select('id,event_id,event_cup_id,giai,name,company,registered_at'),
+        sb.from('rfid_events').select('id,event_id,event_cup_id,giai,epc,recycled_at'),
+        sb.from('beers').select('id,giai')
+      ]);
+      const error = [eventResult,cupResult,registrationResult,recycleResult,beerResult].map(result => result.error).find(Boolean);
+      if (error) { $('status').textContent = 'Kunne ikke hente oversikten: '+error.message; return; }
+      events = eventResult.data || []; cups = cupResult.data || []; registrations = registrationResult.data || []; recycled = recycleResult.data || [];
+      beerById = new Map((beerResult.data || []).map(beer => [String(beer.id),beer]));
+      cups.forEach(cup => { if (!cup.giai && beerById.has(String(cup.cup_id))) cup.giai = beerById.get(String(cup.cup_id)).giai; });
+      const current = $('event-filter').value || 'all';
+      $('event-filter').innerHTML = '<option value="all">Alle arrangementer og historikk</option>'+events.map(event => '<option value="'+escapeHtml(event.id)+'">'+escapeHtml(event.name)+' · '+(event.status==='active'?'Aktiv':'Avsluttet')+'</option>').join('');
+      $('event-filter').value = events.some(event=>event.id===current) ? current : 'all';
+      render();
+    }
+
+    function grantAccess() { $('login-dialog').close(); $('app').hidden=false; sessionStorage.setItem(ACCESS_STORAGE_KEY,'granted'); loadData(); }
+    $('login-form').addEventListener('submit', event => { event.preventDefault(); if ($('password').value === ACCESS_KEY) { $('login-error').classList.remove('show'); grantAccess(); } else { $('login-error').classList.add('show'); $('password').select(); } });
+    $('event-filter').addEventListener('change',render); $('search').addEventListener('input',render); $('refresh').addEventListener('click',loadData);
+    if (sessionStorage.getItem(ACCESS_STORAGE_KEY) === 'granted') grantAccess(); else $('login-dialog').showModal();
+  </script>
+</body>
+</html>

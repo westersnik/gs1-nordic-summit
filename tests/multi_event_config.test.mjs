@@ -4,13 +4,14 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('..', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-const [schema, claims, config, display, cupPage, relay] = await Promise.all([
+const [schema, claims, config, display, cupPage, relay, overview] = await Promise.all([
   read('supabase/migrations/20260811_multi_event_configuration.sql'),
   read('supabase/migrations/20260812_event_scoped_claims.sql'),
   read('konfigurasjon.html'),
   read('storskjerm.html'),
   read('V2/index.html'),
   read('supabase/functions/rfid-relay/index.ts'),
+  read('oversikt.html'),
 ]);
 
 assert.match(schema, /coffee-batch-1[\s\S]*'coffee'/, 'Batch 1 must be declared as coffee');
@@ -27,6 +28,10 @@ assert.match(display, /EVENT_ID/, 'Storskjerm must support event-scoped links');
 assert.match(cupPage, /claim_event_cup/, 'Digital cup page must use event-scoped claims');
 assert.match(relay, /event_cup_id/, 'RFID relay must attach reads to an allocated event cup');
 assert.match(relay, /recorded \(legacy mode\)/, 'RFID relay must preserve legacy behavior before the first configured event');
+assert.match(overview, /ACCESS_KEY/, 'Overview page must require an access key');
+assert.match(overview, /event-filter/, 'Overview page must support event filtering');
+assert.match(overview, /registered-body/, 'Overview page must list registered cups');
+assert.match(overview, /recycled-body/, 'Overview page must list recycled cups');
 
 function assertInlineScriptsCompile(source, label) {
   const scripts = [...source.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
@@ -41,5 +46,6 @@ function assertInlineScriptsCompile(source, label) {
 assertInlineScriptsCompile(config, 'Configuration page');
 assertInlineScriptsCompile(display, 'Storskjerm');
 assertInlineScriptsCompile(cupPage, 'Digital cup page');
+assertInlineScriptsCompile(overview, 'Overview page');
 
 console.log('Multi-event configuration regression checks passed.');

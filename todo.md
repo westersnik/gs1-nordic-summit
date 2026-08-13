@@ -16,3 +16,6 @@
 - [x] Make the event configuration page openly accessible without user login.
 - [x] Include coffee and beer as supported product modes in event configuration.
 - [x] Preserve batch 1 and batch 2 as coffee batches, and require every future batch to declare coffee or beer.
+- [x] Create an `oversikt.html` page with password-gated access to registered and recycled cup lists.
+- [x] Add event-aware filtering, search, and totals to the overview page.
+- [x] Validate and publish the overview page with the event site.

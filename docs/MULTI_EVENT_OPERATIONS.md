@@ -62,9 +62,16 @@ Konfigurasjonslenkene gir både storskjerm og V2-siden et `event`-parameter. QR-
 
 Før et arrangement opprettes for en leser beholder RFID-reléet den gamle, uavgrensede driftsmåten. Dette er en kompatibilitetsmekanisme for dagens demo. Når et aktivt arrangement er konfigurert for leseren, avvises tagger som ikke er med i den valgte batchen eller nummerserien. [3]
 
+## Oversikt over registrerte og resirkulerte kopper
+
+Åpne [oversiktssiden](https://gs1-nordic.invig.no/oversikt.html) for å se hele listen, ikke bare den korte feeden på storskjermen. Siden viser totalt antall registrerte og resirkulerte kopper, navn og selskap for registrerte kopper, samt RFID-tidspunkt og registreringsstatus for resirkulerte kopper. Den kan avgrenses per arrangement og søkes med koppnummer, GIAI, navn eller selskap. [5]
+
+Siden har den avtalte tilgangskoden som en enkel sperre i nettleseren. Siden er en statisk GitHub Pages-side som leser med den samme publiserte Supabase-klientnøkkelen som de øvrige offentlige sidene; tilgangskoden skal derfor ikke brukes som vern for sensitiv eller personkritisk informasjon. For slikt behov bør siden flyttes til reell autentisering og strengere database-tilgang.
+
 ## Referanser
 
 [1]: ../supabase/migrations/20260811_multi_event_configuration.sql "Batch-, arrangement- og koppallokeringsskjema"
 [2]: ../konfigurasjon.html "Åpen arrangementskonfigurasjon"
 [3]: ../supabase/functions/rfid-relay/index.ts "RFID-relé med arrangementsskoping"
 [4]: ../supabase/tests/event_reuse_rollback_test.sql "Rollback-only test av gjenbruk"
+[5]: ../oversikt.html "Passordgated koppoversikt"
