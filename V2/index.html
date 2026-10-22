@@ -839,8 +839,32 @@
       const p = new URLSearchParams(window.location.search);
       return p.get('giai') || p.get('id') || null;
     }
-    function getEventId() {
-      return new URLSearchParams(window.location.search).get('event') || null;
+    let ACTIVE_EVENT_ID = new URLSearchParams(window.location.search).get('event') || null;
+    function getEventId() { return ACTIVE_EVENT_ID; }
+    async function resolveActiveEvent() {
+      if (ACTIVE_EVENT_ID || !getGIAI()) return ACTIVE_EVENT_ID;
+      try {
+        const { data: events } = await sb
+          .from('event_sessions')
+          .select('id, status, started_at')
+          .eq('status', 'active')
+          .order('started_at', { ascending: false });
+        for (const event of (events || [])) {
+          const { data: cups } = await sb
+            .from('event_cups')
+            .select('event_id, beers!inner(giai)')
+            .eq('event_id', event.id)
+            .eq('beers.giai', getGIAI())
+            .limit(1);
+          if (cups && cups.length) {
+            ACTIVE_EVENT_ID = event.id;
+            return ACTIVE_EVENT_ID;
+          }
+        }
+      } catch (error) {
+        console.warn('[Supabase] active event lookup failed:', error);
+      }
+      return null;
     }
     function bottleNumber(giai) {
       const g = parseInt(giai, 10);
@@ -1524,7 +1548,8 @@
 
     // ── Registration popup ──────────────────────────────────────────
     // Run after DOM is fully parsed (popup HTML is below this script block)
-    setTimeout(function initRegPopup() {
+    setTimeout(async function initRegPopup() {
+      await v2Ready;
       const giai = getGIAI();
       if (!giai) return; // no bottle scanned, skip popup
 

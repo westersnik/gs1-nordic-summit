@@ -482,7 +482,7 @@
   const SUPABASE_URL  = 'https://spbfuhajwfadzvdidalk.supabase.co';
   const SUPABASE_ANON = 'sb_publishable_8FjsZ9PbOGVCMvzp0qxEyA_c2AJJpE3';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  const EVENT_ID = new URLSearchParams(window.location.search).get('event');
+  let EVENT_ID = new URLSearchParams(window.location.search).get('event');
 
   // ── State ────────────────────────────────────────────
   let rfidEvents    = [];   // [{giai, num, name, company, ts}]
@@ -752,7 +752,20 @@
   setInterval(refreshLiveTemps, 300000);
 
   // ── Supabase: load initial data ───────────────────────
+  async function resolveActiveEvent() {
+    if (EVENT_ID) return EVENT_ID;
+    // A plain storskjerm.html URL follows the currently active reader event.
+    const { data } = await sb
+      .from('event_sessions')
+      .select('id, status, started_at')
+      .eq('status', 'active')
+      .order('started_at', { ascending: false })
+      .limit(1);
+    EVENT_ID = data?.[0]?.id || null;
+    return EVENT_ID;
+  }
   async function loadInitialData() {
+    await resolveActiveEvent();
     await loadEventConfig();
     // Load registrations FIRST so enrichment has names available
     let registrationsQuery = sb
