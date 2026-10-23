@@ -1011,7 +1011,7 @@
       { icon: '🚛', title: 'Distribution Centre Oslo', meta: 'Alnabru, Oslo · 11 May 2026', temp: '3.8°C', done: true },
       { icon: '🚚', title: 'Refrigerated Transport', meta: 'Oslo city centre · 13 May 2026', temp: '5.9°C', done: true },
       { icon: '🏨', title: 'Venue Cold Room', meta: 'Radisson Blu Plaza, Oslo · 13 May 2026', temp: '4.0°C', active: true },
-      { icon: '🍺', title: 'Handed to you', meta: 'Radisson Blu Plaza · Now', temp: null, done: false },
+      { icon: '☕', title: 'Handed to you', meta: 'Radisson Blu Plaza · Now', temp: null, done: false },
     ];
 
     // ── Render journey panel (SmartPallet Bifrost) ──────────
@@ -1076,7 +1076,7 @@
 
           // Current / end location marker (venue)
           const venueIcon = L.divIcon({
-            html: '<div style="background:#B5A23A;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)">🍺</div>',
+            html: '<div style="background:#B5A23A;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)">☕</div>',
             className: '',
             iconSize: [28, 28],
             iconAnchor: [14, 14],
@@ -1250,7 +1250,7 @@
                 <div class="drinker-name">${d.name}${isMe ? ' (you)' : ''}</div>
                 <div class="drinker-meta">${d.company || ''}</div>
               </div>
-              <div class="drinker-num">🍺 ${bottleCount}</div>
+              <div class="drinker-num">☕ ${bottleCount}</div>
             </div>`;
         });
       }
@@ -1481,8 +1481,8 @@
       document.getElementById('register-main').style.display   = 'none';
       document.getElementById('register-success').style.display = 'block';
       document.getElementById('register-success-msg').innerHTML =
-        `Bottle ${num ? '#'+num : ''} has been linked to <strong>${name}</strong>.<br>` +
-        `You have now registered <strong>${totalBottles}</strong> bottle(s) at GS1 Nordic Summit. 🍺`;
+        `Kopp ${num ? '#'+num : ''} er koblet til <strong>${name}</strong>.<br>` +
+        `Du har nå registrert <strong>${totalBottles}</strong> kopp(er) på arrangementet. ☕`;
 
       // Refresh drinker list and my-beer strip
       document.getElementById('drinker-list').innerHTML = '';
@@ -1501,7 +1501,9 @@
       }, 3000);
     }
 
-    render();
+    // Resolve the active event before any owner lookup, count, or registration.
+    // This makes a standard QR URL (?giai=...) work without an event parameter.
+    const v2Ready = resolveActiveEvent().then(() => render());
 
     // ── Registration popup ──────────────────────────────────────────
     // Run after DOM is fully parsed (popup HTML is below this script block)
@@ -1517,6 +1519,11 @@
         const user = users[myPhone];
         if (user && user.bottles && user.bottles.includes(giai)) return; // already registered
       }
+
+      // Browser storage is not authoritative. Do not invite a second person to
+      // claim a cup that is already registered in this active Supabase event.
+      const claimedOwner = await supabaseGetBottleOwner(giai);
+      if (claimedOwner) return;
 
       // Show popup after a short delay so the page renders first
       const overlay = document.getElementById('reg-popup-overlay');
@@ -1581,10 +1588,10 @@
   <div id="reg-popup-overlay">
     <div id="reg-popup-card">
       <div class="popup-drag-handle"></div>
-      <div class="popup-cup-icon">🍺</div>
+      <div class="popup-cup-icon">☕</div>
       <div class="popup-title">Registrer <span id="popup-bottle-num">din kopp</span>!</div>
       <div class="popup-sub">
-        Enter your phone number to register this beer as yours.<br>
+        Skriv inn telefonnummeret ditt for å registrere koppen på deg.<br>
         <strong>Din kopp. Din reise. Dine data.</strong>
       </div>
       <div class="popup-error" id="popup-error"></div>
