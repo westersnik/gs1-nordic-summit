@@ -953,33 +953,6 @@
       });
     }
 
-    function genScannedCount(bottleNum) {
-      const r = seededRand(bottleNum * 3 + 11);
-      return Math.floor(r() * 180) + 40;
-    }
-
-    const MOCK_NAMES = [
-      { name: 'Ola Nordmann',    company: 'GS1 Norway',     emoji: '👨‍💼' },
-      { name: 'Ingrid Larsen',   company: 'Carlsberg Group', emoji: '👩‍🔬' },
-      { name: 'Erik Svensson',   company: 'Invig AS',        emoji: '👨‍💻' },
-      { name: 'Maja Andersen',   company: 'ASKO Norge',      emoji: '👩‍💼' },
-      { name: 'Lars Pettersen',  company: 'Norgesgruppen',   emoji: '👨‍🏫' },
-      { name: 'Sofia Lindqvist', company: 'GS1 Sweden',      emoji: '👩‍💻' },
-    ];
-
-    function genMockDrinkers(bottleNum) {
-      const r = seededRand(bottleNum * 17 + 5);
-      const count = Math.floor(r() * 3);
-      const list = []; const used = new Set();
-      for (let i = 0; i < count; i++) {
-        let idx; do { idx = Math.floor(r() * MOCK_NAMES.length); } while (used.has(idx));
-        used.add(idx);
-        const n = MOCK_NAMES[idx];
-        list.push({ ...n, bottles: Math.floor(r() * 4) + 1, isLocal: false });
-      }
-      return list;
-    }
-
     // ── SmartPallet Bifrost API ──────────────────────────
     // Devices: SR-Tracker-09, SR-Tracker-03
     // CORS enabled – works directly from GitHub Pages
@@ -1235,26 +1208,10 @@
       const listEl = document.getElementById('drinker-list');
       listEl.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">Loading…</div>`;
 
-      // Fetch from Supabase (live), merge with localStorage
-      const [sbDrinkers, localDrinkers] = await Promise.all([
-        supabaseGetBottleDrinkers(giai),
-        Promise.resolve(getBottleDrinkers(giai))
-      ]);
-
-      // Merge: prefer Supabase data, supplement with localStorage
-      const seenNames = new Set(sbDrinkers.map(d => d.name));
-      const merged = [
-        ...sbDrinkers.map(d => ({ ...d, isLocal: false, bottles: 1 })),
-        ...localDrinkers.filter(d => !seenNames.has(d.name)).map(d => ({ ...d, isLocal: true, bottles: getUserBottleCount(d.phone) }))
-      ];
-
-      // If no real drinkers, show mock data for demo
-      const mockDrinkers  = genMockDrinkers(bottleNum);
-      const scanned       = genScannedCount(bottleNum);
-      const mockNames = new Set(merged.map(d => d.name));
-      const finalList = merged.length > 0
-        ? merged
-        : mockDrinkers.filter(d => !mockNames.has(d.name));
+      // A live cup can only show Supabase registrations from its active event.
+      // Browser storage supports the form flow but never decides cup ownership.
+      const sbDrinkers = await supabaseGetBottleDrinkers(giai);
+      const finalList = sbDrinkers.map(d => ({ ...d, isLocal: false, bottles: 1 }));
 
       document.getElementById('drinker-count').textContent = finalList.length;
       // Fetch real registered + recycled counts from Supabase
@@ -1278,7 +1235,7 @@
       }
 
       if (finalList.length === 0) {
-        listEl.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">No one has registered yet – be the first!</div>`;
+        listEl.innerHTML = `<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px 0;">Ingen har registrert denne koppen ennå.</div>`;
       } else {
         const myPhone = (localStorage.getItem('gs1ns_my_phone') || '').replace(/\s/g,'');
         listEl.innerHTML = '';

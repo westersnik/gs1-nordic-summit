@@ -26,6 +26,8 @@ assert.match(config, /close_event_session/, 'Configuration UI must close events 
 assert.match(display, /event-progress/, 'Storskjerm must contain the configurable event progress interface');
 assert.match(display, /EVENT_ID/, 'Storskjerm must support event-scoped links');
 assert.match(cupPage, /claim_event_cup/, 'Digital cup page must use event-scoped claims');
+assert.doesNotMatch(cupPage, /genMockDrinkers|MOCK_NAMES|Lars Pettersen|Norgesgruppen/, 'Live cup page must not show hardcoded demo drinkers');
+assert.match(cupPage, /const finalList = sbDrinkers\.map/, 'Live cup owners must be sourced from Supabase only');
 assert.match(relay, /event_cup_id/, 'RFID relay must attach reads to an allocated event cup');
 assert.match(relay, /recorded \(legacy mode\)/, 'RFID relay must preserve legacy behavior before the first configured event');
 assert.match(overview, /ACCESS_KEY/, 'Overview page must require an access key');
